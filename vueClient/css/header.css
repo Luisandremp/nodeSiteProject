@@ -1,0 +1,55 @@
+*{
+    box-sizing: border-box;
+}
+body{
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+}
+.header{
+    width: 100%;
+    border-bottom:  0.5rem solid black;
+}
+.container{
+    width: 768px;
+    margin: 5px auto 0px auto;
+    display: flex;
+    
+}
+.frame{
+    width: 100%; 
+    margin: 2rem auto 2rem auto;
+    padding: 2rem;
+    display: flex;
+    flex-flow: column;
+    border:  0.5rem solid black;
+    box-shadow: -5px 10px #eee;
+}
+.loginFrame{
+    max-width: 600px; 
+}
+.top{
+    flex-flow: row wrap;
+    justify-content: space-between;
+}
+.row{
+    display: flex;
+    flex-flow: row wrap;
+}
+.row>*{
+    flex-grow: 1;
+    display: inline-block;
+    max-width: 50%;
+}
+.oneclick-login, .local-login>form{
+    display: flex;
+    flex-flow: column;
+    margin: 0.2rem
+}
+h2{
+    display: block;
+    margin: 0rem auto 1rem auto;
+}
+
+
+
