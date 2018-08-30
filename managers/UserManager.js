@@ -120,6 +120,35 @@ module.exports ={
             }];
         }
     },
+    changePassword: async function(userJson, id){
+        
+        try {
+
+            const result = await this.getUserByID(id);
+            const match = await this.bcrypt.compare(userJson.oldPassword, result.user.password);
+
+            console.log("!!!!!!!!!!!!! en manager !!!!!!!!!!!!!!!!!!!")
+            console.log("result: " ,result, "  match:   ", match)
+            console.log("!!!!!!!!!!!!! en manager !!!!!!!!!!!!!!!!!!!")
+
+            console.log("userJ: ", userJson, " ", match, " ", result.user)
+            if (result.user.password == null || match ) {
+                if (userJson.newPassword === userJson.confirmPassword) {
+                    user.password = await this.bcrypt.hash(userJson.password, this.saltRounds);
+                    return await this.Repository.modifyUser(userJson, id);
+                }
+            }else{
+                [{success: false, location: 'body',
+                    msg: "Invalid password"
+                }];
+            }
+         
+        } catch (err) {
+            return [{success: false, location: 'body',
+                    msg: err
+                }];
+            }
+},
 
     getUsers: async function(){
     try {

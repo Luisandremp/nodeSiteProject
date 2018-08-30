@@ -14,6 +14,11 @@ body{
     width: 768px;
     margin: 5px auto 0px auto;
     display: flex;
+    justify-content: space-between;
+    
+}
+.nav{
+    text-align: right;
     
 }
 .frame{
@@ -28,18 +33,31 @@ body{
 .loginFrame{
     max-width: 600px; 
 }
+.side_by_side{
+    flex-grow: 1;
+    display: inline-block; 
+    margin: 1rem 0.5rem 1rem 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-flow: column;
+    border:  0.2rem solid black;
+}
 .top{
     flex-flow: row wrap;
     justify-content: space-between;
 }
 .row{
     display: flex;
-    flex-flow: row wrap;
+    flex-flow: row;
 }
 .row>*{
     flex-grow: 1;
     display: inline-block;
     max-width: 50%;
+}
+.col{
+    display: flex;
+    flex-flow: column;
 }
 .oneclick-login, .local-login>form{
     display: flex;

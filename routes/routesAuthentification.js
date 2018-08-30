@@ -71,85 +71,32 @@ passport.use(new LocalStrategy({
     }
 ));
 
-passport.use(new JWTStrategy({
-    jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-    secretOrKey   : TOKENSECRET
-},
-function (jwtPayload, cb) {
-    
-    //find the user in db if needed. This functionality may be omitted if you store everything you'll need in JWT payload.
-    return Manager.getUserByID(jwtPayload.id)
-        .then(result => {  
-            const user = exportUser(result.user.dataValues);
-            
-            return cb(null, user);
-        })
-        .catch(err => {
-            console.log("err: ",err)
-            return cb(err);
-        });
-}
-));
+
 
 /* POST login. */
 router.post('/login2', function (req, res, next) {
-    passport.authenticate('local', {session: false}, (err, user, info) => {
-        if (err || !user) {
+    passport.authenticate('local', {session: false}, (err, userInfo, info) => {
+        console.log(userInfo)
+        if (err || !userInfo) {
             return res.status(400).json({
                 message: 'Something is not right',
-                user   : user
+                user   : userInfo
             });
         }
-       req.login(user, {session: false}, (err) => {
+       req.login(userInfo, {session: false}, (err) => {
            if (err) {
                res.send(err);
            }
 
            // generate a signed son web token with the contents of user object and return it in the response
-           const userExport = exportUser(user);
-           const token = jwt.sign(userExport, TOKENSECRET);
-           return res.json({userExport, token});
+           const user = exportUser(userInfo);
+           const token = jwt.sign(user, TOKENSECRET);
+           return res.json({user, token});
         });
     })(req, res);
 });
 
-/**
- * Parse the token from the headers
- */
-getToken = function (headers) {
-    if (headers && headers.authorization) {
-      var parted = headers.authorization.split(' ');
-      if (parted.length === 2) {
-        return parted[1];
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-  };
 
-router.get('/', passport.authenticate('jwt', { session: false}), async (req,res)=>{
-    const token = getToken(req.headers);
-    // verify a token symmetric - synchronous
-    const decoded = jwt.verify(token, TOKENSECRET);
-
-
-  if (token) {
-    try {
-        const result = await  Manager.getUserByID(decoded.id)
-        const user = exportUser(result.user);
-        return res.status(200).send(user);
-    } catch (error) {
-        console.log('http error', error);
-        return res.status(500).send();
-    }
-  } else {
-    return res.status(403).send({success: false, msg: 'Unauthorized.'});
-  }
-
-         
-});
 
 
 
@@ -192,11 +139,6 @@ passport.use(new GoogleStrategy({
     }else{
         return done( result.msg, result.msg);
     }
-      /*
-       User.findOrCreate({ googleId: profile.id }, function (err, user) {
-         return done(err, user);
-       });
-       */
   }
 ));
 
@@ -209,7 +151,13 @@ router.get('/facebook',
 router.get('/facebook/callback',
     passport.authenticate('facebook'),
         async function(req, res) {
-            const result  = await Manager.getUserOrCreate(req.user)
+            const result = await Manager.getUserOrCreate(req.user).catch(function (error) {
+                console.log(error)
+            })
+            const user = exportUser(result.user);
+            const token = jwt.sign(user, TOKENSECRET);
+            console.log("sending: ",user)
+            return res.json({user, token});       
             return res.redirect('http://localhost/node/nodeSequelize/vueClient/')
         }
 );
@@ -230,10 +178,15 @@ router.get('/google',
 //   login page.  Otherwise, the primary route function function will be called,
 //   which, in this example, will redirect the user to the home page.
 router.get('/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/users' }),
+  passport.authenticate('google'),
   async function(req, res) { 
-    const result  = await Manager.getUserOrCreate(req.user);
-    return res.redirect('http://localhost/node/nodeSequelize/vueClient/');
+    const result = await Manager.getUserOrCreate(req.user);
+    const user = exportUser(result.user);
+    const token = jwt.sign(user, TOKENSECRET);
+    console.log("sending: ",user)
+    return res.json({user, token});
+    return res.status(200).json(result);
+     //res.redirect('http://localhost/node/nodeSequelize/vueClient/');
   });
 
 
@@ -277,7 +230,10 @@ router.post('/register', async (req,res)=>{
                 await req.login(result.user.id, (err)=>{
                    if(err) console.log(err);            
                 });
-
+                // generate a signed son web token with the contents of user object and return it in the response
+                const user = exportUser(result.user);
+                const token = jwt.sign(user, TOKENSECRET);
+                return res.json({user, token});
                 return res.status(200).send(result);
             }else{
                 console.log('Register failed : ', result)
@@ -317,8 +273,8 @@ function validateFields(req, fields){
 }
 
 exportUser = function (user) {
-    const exportableUser = {id: user.id, name: user.name, email: user.email },
-    return exportableUser
+    const exportableUser = {id: user.id, name: user.name, email: user.email };
+    return exportableUser;
   }
 
 module.exports = router;

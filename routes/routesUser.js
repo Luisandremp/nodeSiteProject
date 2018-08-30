@@ -43,5 +43,17 @@ router.put('/:id', async (req,res)=>{
         return res.status(500).send();
     }     
 });
+//modify a password
+router.put('/modifyPassword/:id', async (req,res)=>{
+    try {
+        console.log("!!!!!!!!!!!!! en route !!!!!!!!!!!!!!!!!!!")
+        console.log("body: " ,req.body, "  params:   ", req.params.id)
+        console.log("!!!!!!!!!!!!! en route !!!!!!!!!!!!!!!!!!!")
+        return res.status(200).send( await  Manager.changePassword(req.body, req.params.id));
+    } catch (error) {
+        console.log('http error', error);
+        return res.status(500).send();
+    }     
+});
 
 module.exports = router;

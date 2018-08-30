@@ -10,7 +10,6 @@ Vue.component('content-base', {
     },
     mounted: function () {
       this.$nextTick(function () {
-        VUEevent.$emit("updateAuth");
         VUEevent.$emit("updateCurrentPage");
   
         const context = this;

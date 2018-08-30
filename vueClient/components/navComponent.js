@@ -7,7 +7,7 @@ Vue.component('nav-options', {
       isLoggingIn: (this.currentpage == "login"),
       islogged: Auth.isLogged,
       isadmin: Auth.isAdmin,
-      username: Auth.user.name
+      username: ""
     }
   },
   props: [],
@@ -21,7 +21,7 @@ Vue.component('nav-options', {
     <div class="menu" v-show="islogged">  
       <p>
         Check your <button>Stats</button>,
-        Change your <button>Profile</button>,
+        Change your <button v-on:click="profil">Profile</button>,
         or <button v-on:click="logout">Logout</button>
       </p>
     </div>
@@ -53,13 +53,14 @@ Vue.component('nav-options', {
       changePage('register');
     },
     login(){
-      Auth.isLogged = true;
       changePage('login');
       VUEevent.$emit("updateAuth");
     },
     logout(){
-      Auth.isLogged = false;
-      VUEevent.$emit("updateAuth");
+      Auth.logout();
+    },
+    profil(){
+      changePage('profil');
     },
     updateCurrentPage: function (){
       this.currentpage = currentPage;
@@ -69,7 +70,10 @@ Vue.component('nav-options', {
     updateAuth: function(){
       this.islogged = Auth.isLogged;
       this.isadmin= Auth.isAdmin;
-      this.username= Auth.user.name;
+      if (Auth.user != null) {
+        this.username= Auth.user.name;
+      }
+      
     }
 
   }

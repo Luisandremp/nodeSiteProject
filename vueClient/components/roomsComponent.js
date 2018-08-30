@@ -25,6 +25,16 @@ Vue.component('rooms', {
         this.socket.on("refreshLobby", function(nbPlayers, players){
             context.refreshLobby(nbPlayers, players);
         })
+    },mounted: function () {
+        Auth.checkAuth();
+         //create a context variable to pass to the callback
+        const context = this;
+        //listen to the event on my global events object and update the corresponding information
+        VUEevent.$on("updateAuth", function (){
+            context.updateAuth();
+        });
+
+
     },
     methods: {
         enterRoom: function(room){
@@ -65,7 +75,18 @@ Vue.component('rooms', {
             if (this.room == "lobby") {
                 this.socket.emit('team', 2, this.nickname);
             }
+        },
+        updateAuth: function(){
+            if (!Auth.isLogged) {
+                this.socket.emit('forceDisconnect');
+                
+                changePage("login");
+            }
         }
+        
+    },
+    beforeDestroy: function(){
+        this.socket.emit('forceDisconnect');
         
     },
     template:

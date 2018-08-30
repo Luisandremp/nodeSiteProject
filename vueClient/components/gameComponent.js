@@ -5,7 +5,7 @@ Vue.component('game', {
         canvas: {width: 650, height: 650},
         minimap: {width: 100, height: 100},
         worldSize: 3000,
-        backgroundImage: {}
+        backgroundImage: {},
       }
         
     },
@@ -27,6 +27,14 @@ Vue.component('game', {
         socket.on('room', function (r) {
             _this.enterRoom(r);
         });
+
+        //Auth.checkAuth();
+         //create a context variable to pass to the callback
+         const context = this;
+         //listen to the event on my global events object and update the corresponding information
+         VUEevent.$on("updateAuth", function (){
+             context.updateAuth(socket);
+         })
 
     },
     methods: {
@@ -483,7 +491,18 @@ Vue.component('game', {
             }
             }
             
+        },updateAuth: function(socket){
+            if (!Auth.isLogged) {
+                
+                socket.emit('forceDisconnect');
+                
+                changePage("login");
+            }
         }    
+    },
+    beforeDestroy: function(){
+        this.socket.emit('forceDisconnect');
+        
     },
     template:
     `       

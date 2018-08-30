@@ -9,50 +9,50 @@ Vue.component('login', {
     methods: {
         
         facebookLogin: function(){
-            window.location.href = "http://localhost:5000/auth/facebook";   
+            //window.location.href = "http://localhost:5000/auth/facebook";
+
+            axios('http://localhost:5000/auth/facebook', {
+                method: 'HEAD',
+                mode: 'no-cors',
+            }).then((response) => {
+                console.log(response);
+            }).catch((e) => {
+                console.log(e);
+            });
+
+
         },
         googleLogin: function(){
-            window.location.href = "http://localhost:5000/auth/google";
+           // window.location.href = "http://localhost:5000/auth/google";
+            fetch('http://localhost:5000/auth/google', { mode: 'no-cors' })
+            .then(function(response) {
+                
+                console.log("result", response)
+            }).catch(function (error) {
+                console.log(error)
+            })
         },
-        localLogin: async function(){
-                       
+        localLogin: function(){  
+           Auth.localLogin(this.email, this.password);
 
-            axios.post('http://localhost:5000/auth/login2', {'email': this.email, 'password': this.password})
-            .then(function (response) {
-                console.log('response: ',response.data);
-                
-                localStorage.setItem('jwtToken', response.data.token)
-                
-                
-                Auth.isLogged = true;
-                Auth.isAdmin = true;
-                VUEevent.$emit("updateAuth");
-                //changePage("rooms");
-
-            })
-            .catch(function (error) {
-                console.log('error: ',error);
-
-            })
-            .then(function () {
-                // always executed
-            });
-            
-
+        },
+        updateAuth: function(){
+            if (Auth.isLogged) {
+                changePage("rooms");
+            } ;
         }
+        
     },
     mounted: function () {
-        axios.defaults.headers.common['Authorization'] = "Bearer "+localStorage.getItem('jwtToken');
-        axios.get(`http://localhost:5000/auth/`)
-        .then(response => {
+        Auth.checkAuth();
+         //create a context variable to pass to the callback
+        const context = this;
+        //listen to the event on my global events object and update the corresponding information
+        VUEevent.$on("updateAuth", function (){
+            context.updateAuth();
+        });
 
-        console.log(response.data);
-            
-        })
-        .catch(e => {
-            console.log('error', e);
 
-        })
     },
     template: 
     `

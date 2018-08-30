@@ -29,12 +29,32 @@ Vue.component('register', {
             */
             axios.post('http://localhost:5000/auth/register', user)
               .then(function (response) {
-                console.log(response);
+                Auth.user = response.data.user;
+                localStorage.setItem('jwtToken', response.data.token)
+                Auth.isLogged = true;
+                Auth.isAdmin = true;
+                VUEevent.$emit("updateAuth");
               })
               .catch(function (error) {
                 context.errors= error.response.data.errors;
               });
+        },
+        updateAuth: function(){
+            if (Auth.isLogged) {                
+                changePage("rooms");
+            }
         }    
+    },
+    mounted: function () {
+        Auth.checkAuth();
+         //create a context variable to pass to the callback
+        const context = this;
+        //listen to the event on my global events object and update the corresponding information
+        VUEevent.$on("updateAuth", function (){
+            context.updateAuth();
+        });
+
+
     },
     template: 
     `
