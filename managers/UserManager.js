@@ -1,6 +1,7 @@
 module.exports ={
     Repository: require("../repository/Repository.js"),
     bcrypt: require('bcrypt'),
+    sanitizeUser: require('./sanitizeUser.js'),
     saltRounds: 10,
     
     constructor() {
@@ -34,15 +35,24 @@ module.exports ={
     loginUser: async function(loginfo){
         try {
             const user = await this.Repository.getUserByEmail(loginfo.email)
-            const match = await this.bcrypt.compare(loginfo.password, user.password);
-            if(user != null &&  match ){
-                return { success: true, 'user': user};
+            let match;
+            if(user!= null){
+                match = await this.bcrypt.compare(loginfo.password, user.password);
+                if(match){
+                    return { success: true, 'user': user};
+                }else{
+                    return [{success: false, location: 'body',
+                    param: 'password',
+                    msg: "Email or Password incorrect.",
+                    value: loginfo.password }];
+                }
             }else{
                 return [{success: false, location: 'body',
                 param: 'password',
-                msg: "Email or Password incorrect.",
+                msg: "This Email isnt registered yet!",
                 value: loginfo.password }];
-            }
+            } 
+            
 
         } catch (err) {
             return [{success: false, location: 'body',
@@ -94,7 +104,7 @@ module.exports ={
         if (userJson.password) {
             userJson.password = await this.bcrypt.hash(userJson.password, this.saltRounds);  
         }
-        
+        userJson.admin = false;
         const user = await this.Repository.insertUser(userJson);
         if (user != null) {
             return { success: true, 'user': user};
@@ -126,12 +136,6 @@ module.exports ={
 
             const result = await this.getUserByID(id);
             const match = await this.bcrypt.compare(userJson.oldPassword, result.user.password);
-
-            console.log("!!!!!!!!!!!!! en manager !!!!!!!!!!!!!!!!!!!")
-            console.log("result: " ,result, "  match:   ", match)
-            console.log("!!!!!!!!!!!!! en manager !!!!!!!!!!!!!!!!!!!")
-
-            console.log("userJ: ", userJson, " ", match, " ", result.user)
             if (result.user.password == null || match ) {
                 if (userJson.newPassword === userJson.confirmPassword) {
                     user.password = await this.bcrypt.hash(userJson.password, this.saltRounds);
@@ -152,7 +156,15 @@ module.exports ={
 
     getUsers: async function(){
     try {
-        return await this.Repository.getUsers();
+        const listUsers = await this.Repository.getUsers();
+        const listUsersSanitized = {} 
+        for (const key in listUsers) {
+            if (listUsers.hasOwnProperty(key)) {
+                let user = listUsers[key];
+                listUsersSanitized[key] = this.sanitizeUser( user );
+            }
+        }
+        return listUsersSanitized;
     } catch (err) {
         return [{success: false, location: 'body',
                 msg: err

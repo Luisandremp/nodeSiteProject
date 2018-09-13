@@ -12,4 +12,7 @@ module.exports = {
     password: {
         type: Sequelize.TEXT
         },
+    admin: {
+        type: Sequelize.BOOLEAN
+        },  
 }

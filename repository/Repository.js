@@ -12,7 +12,6 @@ module.exports ={
     PlayerStatistics: {},
 
     async constructor() {
-        console.log("repo initialized")
         //coordones to the database
         this.sequelize =  new this.Sequelize('sequelizetest', 'root', '', {
             host: 'localhost',
@@ -35,11 +34,10 @@ module.exports ={
         /**
          * Reset bd
          */
-        /*
-        this.sequelize.sync({force: true}).then(()=>{
-            // createTestValues();
-        });
-        */
+         const context = this
+       /* this.sequelize.sync({force: true}).then(()=>{  
+        });*/
+        
         this.User = this.sequelize.define('user', this.modelUser);
         this.Match= this.sequelize.define('match', this.modelGame);
         this.PlayerStatistics= this.sequelize.define('playerStatistics', this.modelPlayerStatistics );
@@ -49,108 +47,7 @@ module.exports ={
         this.Match.hasMany(this.PlayerStatistics, {as: "game", foreignKey: 'fkMatches', sourceKey: 'id'});
         this.PlayerStatistics.belongsTo(this.Match, {as: "game", foreignKey: 'fkMatches', targetKey: 'id'});
     },
-    
-    /**
-     * Creation des valeur de test
-     */
-    createTestValues: function (){
-        let player = null;
-        let game = null;
-        let statistics = null;
 
-        this.PlayerStatistics.create().then(ps=>{
-            statistics = ps;
-
-            this.postSomething();
-        });
-        this.User.create({
-            'name': 'testName',
-            'email': 'testEmail@gmail.com',
-            'password': 'testPass'
-        }).then(usr=>{
-            player = usr;
-
-            this.postSomething();
-        })
-        this.Match.create({
-            'winningTeam': 0,
-            'timeElapsed': 3600,
-        }).then(gs=>{
-            game = gs;
-            
-            this.postSomething();
-        })
-
-        function postSomething(){
-            if(
-            player != null &&
-            game != null &&
-            statistics != null){
-                        
-                statistics.playerId = player.id;
-                statistics.matchId = game.id;
-                statistics.save().then(()=>{ 
-                    extraTestPlayers()            
-        
-                })
-        
-            }
-        }
-    },
-    extraTestPlayers: function (){
-        this.User.create({
-            'name': 'testuser2',
-            'email': 'testEmail@gmail.com',
-            'password': 'testPass'
-        }).then(usr=>{ 
-            this.PlayerStatistics.create().then(ps=>{
-                ps.playerId = usr.id;
-                ps.matchId = 1;
-                ps.save().then(()=>{             
-            
-                })
-            });
-        })
-        this.User.create({
-            'name': 'testuser3',
-            'email': 'testEmail@gmail.com',
-            'password': 'testPass'
-        }).then(usr=>{ 
-            this.PlayerStatistics.create().then(ps=>{
-                ps.playerId = usr.id;
-                ps.matchId = 1;
-                ps.save().then(()=>{             
-            
-                })
-            });
-        })
-        this.User.create({
-            'name': 'testuser4',
-            'email': 'testEmail@gmail.com',
-            'password': 'testPass'
-        }).then(usr=>{     
-            this.PlayerStatistics.create().then(ps=>{
-                ps.playerId = usr.id;
-                ps.matchId = 1;
-                ps.save().then(()=>{             
-            
-            })
-        });
-        })
-        this.User.create({
-            'name': 'testuser5',
-            'email': 'testEmail@gmail.com',
-            'password': 'testPass'
-        }).then(usr=>{
-            this.PlayerStatistics.create().then(ps=>{
-                ps.playerId = usr.id;
-                ps.matchId = 1;
-                ps.save().then(()=>{             
-            
-                })
-            });
-        })
-    },
     async getUsers(){
         try {
             return await this.User.findAll();
@@ -171,7 +68,6 @@ module.exports ={
     async deleteUser(id){
         try {
             this.User.findById(id).then((user)=>{
-                console.log("user: "+user.name+" is deleted");
                 user.destroy();
                 return "user: "+user.name+" is deleted";
             });
@@ -183,9 +79,9 @@ module.exports ={
     async modifyUser(userJson, id){
         try {
             this.User.findById(id).then((user)=>{
-                user.update(userJson).then(()=>{
-                    console.log("user: "+user.name+" is modified");
-                    return "user: "+user.name+" is modified";
+                user.update(userJson).then((user)=>{
+                    return user;
+
                 });  
             });
         } catch (error) {
@@ -217,7 +113,6 @@ module.exports ={
     
     async findListPlayersInGame(id){        
         try {
-            console.log("repo!!")
             return await this.PlayerStatistics.findAll({ 
                 where: {matchId: id},
                 include: ['player']
@@ -256,6 +151,24 @@ module.exports ={
             console.log("BD error: "+error)
         }
     },
+    async modifyGame(gameJason, id){
+        try {
+            this.Match.findById(id).then((game)=>{
+                if (game != null) {                    
+                    game.update(gameJason).then(()=>{
+                        return "user: "+game.id+" is modified";
+                    }); 
+                    
+                }else{
+                    throw Error("Cant find game with this id");
+                }
+                 
+            });
+        } catch (error) {
+            console.log("BD error: "+error)
+        }
+        
+    },
     async insertPlayerStatistcs(insertJson){
         try {
             playerStatistics = await this.PlayerStatistics.create(insertJson);
@@ -280,7 +193,6 @@ module.exports ={
     },
     async getStatisticsOfPlayerInGame(player, match){
         try {
-            console.log("repo!!")
             return await this.PlayerStatistics.findAll({ 
                 where: {fkMatches: match,
                         fkPlayers: player},

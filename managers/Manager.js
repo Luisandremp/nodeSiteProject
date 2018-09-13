@@ -100,13 +100,26 @@ createNewGameStatistics: async function (gameStatistics) {
     try {
         //Insert a newGame
         const game = await this.insertGame(gameStatistics.game);
-        console.log("game inserted: ", game.id)
         gameStatistics.players.forEach(playerStatistcs => {
             playerStatistcs.fkMatches =  game.id;
             this.insertPlayerStatistics(playerStatistcs);
         });
 
-        return  [{success: true, msg: "game initiated"}];                        
+        return  [{success: true, gameId: game.id}];                        
+    } catch (err) {
+        return [{success: false, 
+            msg: err
+            }];
+    }
+  },
+  updateGameStatistics: async function (gameStatistics) {
+    try {
+        this.Repository.modifyGame(gameStatistics.game, gameStatistics.game.id)
+        gameStatistics.players.forEach(playerStatistcs => {
+           this.insertOrUpdatePlayerStatistics(playerStatistcs);
+        });
+
+        return  [{success: true, gameId: game.id}];                        
     } catch (err) {
         return [{success: false, 
             msg: err

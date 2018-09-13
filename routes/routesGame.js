@@ -40,7 +40,6 @@ router.delete('/:id', async (req,res)=>{
 //insert an game
 router.post('/', async (req,res)=>{
     try {
-        console.log(req.body)
         return res.status(200).send( await  Manager.insertGame(req.body));
     } catch (error) {
         console.log('http error', error);
@@ -50,7 +49,6 @@ router.post('/', async (req,res)=>{
 //modify an user
 router.put('/:id', async (req,res)=>{
     try {
-        console.log(req.body)
         return res.status(200).send( await  Manager.modifyGame(req.body, req.params.id));
     } catch (error) {
         console.log('http error', error);

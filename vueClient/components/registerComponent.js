@@ -11,6 +11,7 @@ Vue.component('register', {
     props: [],
     methods: {
         register: function(){
+            this.errors = [];
             context = this;
             const user = {
                 'name': this.username, 
@@ -18,21 +19,13 @@ Vue.component('register', {
                 'password': this.password, 
                 'passwordMatch': this.passwordMatch
               }
-            /*
-            r =request.register(user)
-            if (r) {
-                //login
-                //redirect sur main page           
-            }else{
-                //errors = r.errors
-            }
-            */
-            axios.post('http://localhost:5000/auth/register', user)
+
+            axios.post(window.BASEURL+'/auth/register', user)
               .then(function (response) {
                 Auth.user = response.data.user;
                 localStorage.setItem('jwtToken', response.data.token)
                 Auth.isLogged = true;
-                Auth.isAdmin = true;
+                Auth.isAdmin = Auth.user.isAdmin;
                 VUEevent.$emit("updateAuth");
               })
               .catch(function (error) {
@@ -41,7 +34,7 @@ Vue.component('register', {
         },
         updateAuth: function(){
             if (Auth.isLogged) {                
-                changePage("rooms");
+                //changePage("rooms");
             }
         }    
     },
@@ -59,6 +52,8 @@ Vue.component('register', {
     template: 
     `
     <div class="frame">
+       
+        <h2>Register user</h2>
         <div class="error-list" v-show="errors.length">
             <ul>
                 <li v-for="error in errors">
@@ -66,7 +61,6 @@ Vue.component('register', {
                 </li>
             </ul>
         </div>
-        <h2>register</h2>
             <form action="">
                 <div class="row">
                     <label for="name">Screen Name:</label>

@@ -2,12 +2,13 @@ Vue.component('login', {
     data: function () {
       return {
             email: "",
-            password: ""
+            password: "",
+            errors: []
       }
     },
     props: [],
     methods: {
-        
+        /*
         facebookLogin: function(){
             //window.location.href = "http://localhost:5000/auth/facebook";
 
@@ -31,10 +32,24 @@ Vue.component('login', {
             }).catch(function (error) {
                 console.log(error)
             })
-        },
-        localLogin: function(){  
-           Auth.localLogin(this.email, this.password);
-
+        },*/
+        localLogin: function(){       
+            const context = this;
+            axios.post(window.BASEURL+'/auth/login3', {'email': this.email, 'password': this.password})
+            .then(async function (response) {
+                Auth.user = response.data.user;
+                await localStorage.setItem('jwtToken', response.data.token)
+                Auth.isLogged = true;
+                Auth.isAdmin = Auth.user.isAdmin;
+                
+            })
+              .catch(function (error) {
+                context.errors= error.response.data.errors;            
+                Auth.logout();
+            })
+            .then(function () {
+              VUEevent.$emit("updateAuth");
+            });
         },
         updateAuth: function(){
             if (Auth.isLogged) {
@@ -58,6 +73,15 @@ Vue.component('login', {
     `
     <div class="loginFrame frame">
         <h2>Log In</h2>
+
+        <div class="error-list" v-show="errors.length">
+            <ul>
+                <li v-for="error in errors">
+                    {{ error.msg }}
+                </li>
+            </ul>
+        </div>
+
         <div class="row">
             <div class="local-login">
                     <form action="">
@@ -72,18 +96,21 @@ Vue.component('login', {
                         <button @click.prevent="localLogin">Login</button>
                     </form>
             </div>
+            <div class="anonymous-login">
+                <p class="warning">
+                If you don't sign up you wont be able to choose a screen name, and your progress wont be saved!
+                </p>
+                <button>Don't sign up</button>
+            </div>
+            <!--
             <div class="oneclick-login">
                 <button v-on:click="facebookLogin">Facebook</button>
                 <button  v-on:click="googleLogin">Google</button>
                 <button>Twitter</button>
             </div>
+            -->
         </div>      
-        <div class="anonymous-login row">
-            <p class="warning">
-            If you don't sign up you wont be able to choose a screen name, and your progress wont be saved!
-            </p>
-            <button>Don't sign up</button>
-        </div>
+        
     </div>
     `   
 })

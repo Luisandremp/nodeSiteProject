@@ -35,6 +35,14 @@ router.post('/newGameStatistics', async (req, res)=>{
         return res.status(500).send();
     }
 })
+router.post('/updateGameStatistics', async (req, res)=>{
+    try {
+        return res.status(200).send( await  Manager.updateGameStatistics(req.body));
+    } catch (error) {
+        console.log('http error', error);
+        return res.status(500).send();
+    }
+})
 
 
 module.exports = router;

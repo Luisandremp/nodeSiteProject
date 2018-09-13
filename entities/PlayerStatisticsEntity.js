@@ -24,6 +24,18 @@ module.exports ={
     type: Sequelize.INTEGER,
         defaultValue: 0
     },
+    "power1":{
+        type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+    "power2":{
+        type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+    "power3":{
+        type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
     quitBeforeEndGame: {
         type: Sequelize.BOOLEAN,
             defaultValue: false

@@ -6,6 +6,15 @@ app = new Vue({
     currentPage: "login"
   },
   created: function () {
+    window.BASEPORT = ":5000"
+    window.GAMEPORT = ':3000',
+    //window.BASEIP = "http://192.168.43.154";
+    window.BASEIP = "http://192.168.20.102";
+    window.BASEURL = BASEIP+BASEPORT;
+    window.GAMEURL = BASEIP+GAMEPORT;
+
+    axios.defaults.headers.common['Authorization'] = "bearer "+localStorage.getItem('jwtToken');
+
     //an vue object that will be used to emit events to all components
     window.VUEevent = new Vue({
       methods: {
@@ -24,8 +33,7 @@ app = new Vue({
       isAdmin: this.isAdmin,
       user: null,
       checkAuth(){
-        axios.defaults.headers.common['Authorization'] = "bearer "+localStorage.getItem('jwtToken');
-        axios.get(`http://localhost:5000/`)
+        axios.get(window.BASEURL)
         .then(response => {
           Auth.user = response.data; 
           Auth.isLogged= true;
@@ -42,40 +50,19 @@ app = new Vue({
         });
         
       },
-      logout: function() {
-        localStorage.removeItem('jwtToken')
+      logout: async function() {
+        await localStorage.removeItem('jwtToken')
         Auth.user = null; 
         Auth.isLogged= false;
         Auth.isAdmin= false;
         VUEevent.$emit("updateAuth");
+        changePage("login")
       },
-      localLogin: function(email, password){       
-        let success= false;
-        axios.post('http://localhost:5000/auth/login2', {'email': email, 'password': password})
-        .then(function (response) {
-            Auth.user = response.data.user;
-            localStorage.setItem('jwtToken', response.data.token)
-            Auth.isLogged = true;
-            Auth.isAdmin = true;
-            success=true;
-            
-        })
-          .catch(function (error) {
-            
-            Auth.logout();
-            success=false;
-        })
-        .then(function () {
-          VUEevent.$emit("updateAuth");
-          return success;
-        });
-    }
+      
     };
     window.Socket= {
-      ipAddress: 'localhost',
-      port: '3000',
       connection: {},
-      createConnection: function () {  this.connection = io.connect('http://' + this.ipAddress + ':' + this.port, { transport : ['websocket'] }); }
+      createConnection: function () {  this.connection = io.connect(GAMEURL, { transport : ['websocket'] }); }
     }
 
   },

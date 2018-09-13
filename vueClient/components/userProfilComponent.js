@@ -14,7 +14,7 @@ Vue.component('profil', {
     methods: {
         deleteUser: function(){
         axios.defaults.headers.common['Authorization'] = "bearer "+localStorage.getItem('jwtToken');
-        axios.delete('http://localhost:5000/users/'+Auth.user.id, {withCredentials: true})
+        axios.delete(window.BASEURL+'/users/'+Auth.user.id, {withCredentials: true})
         .then(function (response) {
             console.log(": ", response)
             Auth.logout();
@@ -30,7 +30,7 @@ Vue.component('profil', {
         },
         changeUserDetails: function(){
             axios.defaults.headers.common['Authorization'] = "bearer "+localStorage.getItem('jwtToken');
-            axios.put('http://localhost:5000/users/'+Auth.user.id, {name: this.username, email: this.email}, {withCredentials: true})
+            axios.put(window.BASEURL+'/users/'+Auth.user.id, {name: this.username, email: this.email}, {withCredentials: true})
             .then(function (response) {
                 console.log(": ", response)
                 Auth.checkAuth();
@@ -46,7 +46,7 @@ Vue.component('profil', {
             },
             modifyPassword: function(){
                 axios.defaults.headers.common['Authorization'] = "bearer "+localStorage.getItem('jwtToken');
-                axios.put('http://localhost:5000/users/modifyPassword/'+Auth.user.id, {oldPassword: this.oldPassword, newPassword: this.newPassword, confirmPassword: this.confirmPassword}, {withCredentials: true})
+                axios.put(window.BASEURL+'/users/modifyPassword/'+Auth.user.id, {oldPassword: this.oldPassword, newPassword: this.newPassword, confirmPassword: this.confirmPassword}, {withCredentials: true})
                 .then(function (response) {
                     console.log(": ", response)
                     //Auth.checkAuth();

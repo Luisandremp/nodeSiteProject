@@ -3,9 +3,9 @@ Vue.component('game', {
       return {
         room: "",
         canvas: {width: 650, height: 650},
-        minimap: {width: 100, height: 100},
-        worldSize: 3000,
+        worldSize: 2500,
         backgroundImage: {},
+        towerAttacks: []
       }
         
     },
@@ -20,12 +20,24 @@ Vue.component('game', {
         
         const _this = this;
 
-        socket.emit('joinGame');
+        //socket.emit('joinGame');
         
 
         // listen for what room we are on
         socket.on('room', function (r) {
             _this.enterRoom(r);
+        });
+
+        // listen for what room we are on
+        socket.on('towerAttack', function (tower) {
+           const newAttack= {};
+           newAttack.x = tower.x;
+           newAttack.y = tower.y;
+           newAttack.width = tower.width;
+           newAttack.height = tower.height;
+           newAttack.team = tower.team;
+           newAttack.timeFired = 0;
+           _this.towerAttacks.push(newAttack);
         });
 
         //Auth.checkAuth();
@@ -42,7 +54,7 @@ Vue.component('game', {
             this.room = room;
             switch (this.room) {
                 case "lobby":
-                changePage("rooms");            
+                changePage("statistics");            
                     break;
                 case "game":
                 this.runGame();
@@ -215,12 +227,58 @@ Vue.component('game', {
                     context.clearRect(0, 0, canvas.width, canvas.height);
                     drawBackground(camera.xOffset, camera.yOffset);
                 
+                
+                    // draw attacks that the tower inflincts in the boss
+                    for (const key in _this.towerAttacks) {
+                        towerAttack = _this.towerAttacks[key];
+                        if (_this.towerAttacks.hasOwnProperty(key) && _this.towerAttacks != null) {
+                            
+                            //determine target
+                            let target = {};
+                            for (const key in bosses) {
+                                if (bosses.hasOwnProperty(key)) {
+                                    const boss = bosses[key];
+                                    if (boss.team != towerAttack.team) {
+                                        target = boss;
+                                    }
+                                }
+                            }
+                            
+                            //draw the lazer triangle
+                            chooseColor(towerAttack.team);
+                            //draw the shape
+                            context.beginPath();
+                            context.moveTo(towerAttack.x-camera.xOffset+(controlPoint.width/2)-10,  towerAttack.y-camera.yOffset+(towerAttack.height/2)-10);
+                            context.lineTo(target.x-camera.xOffset,  target.y-camera.yOffset);
+                            context.lineTo(towerAttack.x-camera.xOffset+(controlPoint.width/2)+10,  towerAttack.y-camera.yOffset+(towerAttack.height/2)+10);
+                            context.fill();
+
+                            //determine how long lazer triangle is visible
+                            if (towerAttack.timeFired == 0) {
+                                towerAttack.timeFired = Date.now();
+                            } else {
+                                //if time drawn is passed delete the object
+                                if (towerAttack.timeFired+200 - Date.now()<0) {   
+                                    _this.towerAttacks[key] =null;
+                                    delete _this.towerAttacks[key];
+                                }
+                            }
+    
+                        }
+    
+                    }
                     
-            
                     // draw control points for each control point check it is controled by a team and change its color then draw it
                     for (const key in controlPoints) {
                         controlPoint = controlPoints[key];
                         chooseColor(controlPoint.team);
+                        context.beginPath();
+                        const spikeSize = 5;
+                        context.moveTo(controlPoint.x-camera.xOffset-spikeSize,  controlPoint.y-camera.yOffset+(controlPoint.height/2));
+                        context.lineTo(controlPoint.x-camera.xOffset+(controlPoint.width/2),  controlPoint.y-camera.yOffset+controlPoint.height+spikeSize);
+                        context.lineTo(controlPoint.x-camera.xOffset+controlPoint.width+spikeSize,  controlPoint.y-camera.yOffset+(controlPoint.height/2));
+                        context.lineTo(controlPoint.x-camera.xOffset+(controlPoint.width/2),  controlPoint.y-camera.yOffset-spikeSize);
+                        context.fill();
                         context.fillRect(controlPoint.x-camera.xOffset, controlPoint.y-camera.yOffset, controlPoint.width, controlPoint.height);
                         //  draw progress bar for control points
                         chooseColor(controlPoint.conqueringTeam);
@@ -463,19 +521,29 @@ Vue.component('game', {
             }
             }
             function drawCircles(list, isplayer){
-            for (const key in list) {
-                item = list[key];
-                chooseColor(item.team);
-                
-                context.beginPath();
-                context.arc(item.x-camera.xOffset, item.y-camera.yOffset, item.radius, 0, 2 * Math.PI);
-                context.fill();
-        
-                if (isplayer && item.id === myCharacter.id) {
-                // draw health bar over the player
-                context.fillRect(item.x-item.radius-camera.xOffset , item.y-item.radius-10-camera.yOffset, ((item.radius*2)/100)*(item.healthPoints), 5);
+                for (const key in list) {
+                    item = list[key];
+                    chooseColor(item.team);
+                    
+                    context.beginPath();
+                    context.arc(item.x-camera.xOffset, item.y-camera.yOffset, item.radius, 0, 2 * Math.PI);
+                    context.fill();
+
+                    if(players[item.id] != null){
+                        context.font = '12px mono';
+                        const name = players[item.id].name;
+
+                        context.fillText(name, item.x-(name.length/2)-item.radius-camera.xOffset, item.y-item.radius-13-camera.yOffset);
+                    }
+                   
+            
+                    if (isplayer && item.id === myCharacter.id) {
+                    // draw health bar over the player
+                    
+                    context.fillRect(item.x-item.radius-camera.xOffset , item.y-item.radius-10-camera.yOffset, ((item.radius*2)/100)*(item.healthPoints), 5);
+                       
+                    }
                 }
-            }
             }
             function chooseColor(team){
             switch (team) {
@@ -494,14 +562,14 @@ Vue.component('game', {
         },updateAuth: function(socket){
             if (!Auth.isLogged) {
                 
-                socket.emit('forceDisconnect');
+                //socket.emit('forceDisconnect');
                 
                 changePage("login");
             }
         }    
     },
     beforeDestroy: function(){
-        this.socket.emit('forceDisconnect');
+        //this.socket.emit('forceDisconnect');
         
     },
     template:
